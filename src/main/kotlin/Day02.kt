@@ -10,6 +10,13 @@ class Day02 {
             .sum()
     }
 
+    fun getSumOfPowersOfMinimumSets(gameRecords: List<String>): Int {
+        return gameRecords.map { CubeGame.readGameRecord(it) }
+            .map { it.getMinPossibleSet() }
+            .map { it.power() }
+            .sum()
+    }
+
 }
 
 data class CubeGame(val id: Int, val cubeSets: List<CubeSet>) {
@@ -23,6 +30,10 @@ data class CubeGame(val id: Int, val cubeSets: List<CubeSet>) {
 
     fun getMaxGreens(): Int {
         return cubeSets.map { it.greens }.max()
+    }
+
+    fun getMinPossibleSet(): CubeSet {
+        return CubeSet(getMaxBlues(), getMaxReds(), getMaxGreens())
     }
 
     companion object {
@@ -70,4 +81,8 @@ data class CubeGame(val id: Int, val cubeSets: List<CubeSet>) {
 
 }
 
-data class CubeSet(val blues: Int, val reds: Int, val greens: Int)
+data class CubeSet(val blues: Int, val reds: Int, val greens: Int) {
+    fun power(): Int {
+        return blues * reds * greens
+    }
+}

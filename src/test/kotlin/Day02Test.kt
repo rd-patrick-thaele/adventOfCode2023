@@ -68,6 +68,23 @@ class Day02Test : FreeSpec({
             game.getMaxGreens() shouldBe 13
         }
 
+        "getPower" {
+            //expect
+            CubeSet(6,4,2).power() shouldBe 48
+        }
+
+        "getMinimumSet" {
+            // given
+            val gameRecord = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"
+
+            // when
+            val minSet = CubeGame.readGameRecord(gameRecord)
+                .getMinPossibleSet()
+
+            // then
+            minSet shouldBe CubeSet(6, 4, 2)
+        }
+
 
         "part 1" - {
             // given
@@ -86,15 +103,29 @@ class Day02Test : FreeSpec({
             sumOfImpossibleIds shouldBe 8
         }
 
+        "part 2" - {
+            // given
+            val gameRecords = """
+                Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+                Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+                Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+                Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+                Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+            """.trimIndent().lineSequence().toList()
 
+            // when
+            val sumOfPowers = Day02().getSumOfPowersOfMinimumSets(gameRecords)
+
+            // then
+            sumOfPowers shouldBe 2286
+        }
     }
 
     "solution" - {
+        // given
+        val gameRecords = getResourceFileAsStringSequence("day02/input.txt")
 
         "part 1" {
-            // given
-            val gameRecords = getResourceFileAsStringSequence("day02/input.txt")
-
             // when
             val sumOfImpossibleIds = Day02().getSumOfPossibleIds(gameRecords)
 
@@ -103,7 +134,11 @@ class Day02Test : FreeSpec({
         }
 
         "part 2" {
+            // when
+            val sumOfPowers = Day02().getSumOfPowersOfMinimumSets(gameRecords)
 
+            // then
+            sumOfPowers shouldBe 72513
         }
     }
 }) {
