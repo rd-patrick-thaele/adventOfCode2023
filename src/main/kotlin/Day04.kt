@@ -5,6 +5,23 @@ class Day04 {
         return cards.map { ScratchCard.parseDescription(it) }
             .sumOf { it.calculatePoints() }
     }
+
+    fun getPileSize(cards: List<String>): Int {
+        val sortedPile = cards.map { CardStock(1, ScratchCard.parseDescription(it)) }
+            .toList()
+
+        for ((index, pilePerCard) in sortedPile.withIndex()) {
+            val nbOfMatches = pilePerCard.card.getNbOfMatches()
+
+            repeat(pilePerCard.count) {
+                for (i in 1..nbOfMatches) {
+                    sortedPile[index + i].count++
+                }
+            }
+        }
+
+        return sortedPile.sumOf { it.count }
+    }
 }
 
 data class ScratchCard(val id: Int, val winningNumbers: List<Int>, val lotteryNumbers: List<Int>) {
@@ -29,9 +46,15 @@ data class ScratchCard(val id: Int, val winningNumbers: List<Int>, val lotteryNu
     }
 
     fun calculatePoints(): Int {
-        val nbOfMetWins = winningNumbers.intersect(lotteryNumbers.toSet()).size
+        val nbOfMetWins = getNbOfMatches()
 
         return 2.0.pow(nbOfMetWins-1).toInt()
     }
 
+    fun getNbOfMatches(): Int {
+        return winningNumbers.intersect(lotteryNumbers.toSet()).size
+    }
+
 }
+
+data class CardStock(var count: Int, val card: ScratchCard)
