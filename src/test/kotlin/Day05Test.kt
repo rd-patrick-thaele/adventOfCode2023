@@ -81,6 +81,7 @@ class Day05Test : FreeSpec({
 
             // then
             day05.seeds shouldContainInOrder listOf(79L, 14L, 55L, 13L)
+            day05.seedRanges shouldContainInOrder listOf(79L..92L, 55L..67)
             day05.almanacCategories.size shouldBe 7
 
             day05.almanacCategories.values.toList()[2].sourceCategory shouldBe "fertilizer"
@@ -101,15 +102,27 @@ class Day05Test : FreeSpec({
             // then
             locationNumber shouldBe 35
         }
+
+        "getLowestLocationNumberForSeedRange" {
+            // given
+            val almanac = getResourceFileAsStringSequence("day05/sample.txt")
+            val day05 = Day05.readAlmanac(almanac)
+
+            // when
+            val locationNumber = day05.getLowestLocationNumberForSeedRange()
+
+            // then
+            locationNumber shouldBe 46
+        }
     }
 
     "solution" - {
 
-        "part 1" {
-            // given
-            val almanac = getResourceFileAsStringSequence("day05/input.txt")
-            val day05 = Day05.readAlmanac(almanac)
+        // given
+        val almanac = getResourceFileAsStringSequence("day05/input.txt")
+        val day05 = Day05.readAlmanac(almanac)
 
+        "part 1" {
             // when
             val locationNumber = day05.getLowestLocationNumber()
 
@@ -119,6 +132,10 @@ class Day05Test : FreeSpec({
 
         "part 2" {
             // when
+            val locationNumber = day05.getLowestLocationNumberForSeedRange()
+
+            // then
+            locationNumber shouldBe 50_716_416L
         }
     }
 }) {

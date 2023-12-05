@@ -1,4 +1,5 @@
-class Day05(val seeds: List<Long>, val almanacCategories: Map<String, AlmanacCategory>) {
+
+class Day05(val seeds: List<Long>, val seedRanges: List<LongRange>, val almanacCategories: Map<String, AlmanacCategory>) {
 
     companion object {
 
@@ -7,7 +8,9 @@ class Day05(val seeds: List<Long>, val almanacCategories: Map<String, AlmanacCat
         fun readAlmanac(serialAlmanac: List<String>): Day05 {
             val subLists = splitListByBlankLine(serialAlmanac)
 
-            val seeds = readSeeds(subLists.removeFirst().first())
+            val serialSeeds = subLists.removeFirst().first()
+            val seeds = readSeeds(serialSeeds)
+            val seedRanges = readSeedRanges(serialSeeds)
             val almanacCategories = mutableMapOf<String, AlmanacCategory>()
 
             for (serialCategory in subLists) {
@@ -15,7 +18,7 @@ class Day05(val seeds: List<Long>, val almanacCategories: Map<String, AlmanacCat
                 almanacCategories.put(category.sourceCategory, category)
             }
 
-            return Day05(seeds, almanacCategories.toMap())
+            return Day05(seeds, seedRanges, almanacCategories.toMap())
         }
 
         private fun splitListByBlankLine(serialAlmanac: List<String>): List<List<String>> {
@@ -43,6 +46,12 @@ class Day05(val seeds: List<Long>, val almanacCategories: Map<String, AlmanacCat
                 .toList()
         }
 
+        private fun readSeedRanges(serialSeeds: String): List<LongRange> {
+            return readSeeds(serialSeeds).chunked(2)
+                .map { it[0] until it[0] + it[1]  }
+                .toList()
+        }
+
         private fun readCategory(serialCategory: List<String>): AlmanacCategory {
             val (sourceCategory, destinationCategory) = categoryHeaderRegex.find(serialCategory.removeFirst())!!.destructured
             val mappings = mutableListOf<AlmanacMapping>()
@@ -61,25 +70,47 @@ class Day05(val seeds: List<Long>, val almanacCategories: Map<String, AlmanacCat
 
         var lowestLocationNumber = Long.MAX_VALUE
 
-        val targetCategory = "location"
-
         for (seed in seeds) {
-            var sourceCategory = "seed"
-            var value = seed
+            val locationNumber = getLocationNumberPerSeed(seed)
+            if (locationNumber < lowestLocationNumber) {
+                lowestLocationNumber = locationNumber
+            }
+        }
 
-            while (true) {
-                val category = almanacCategories[sourceCategory]
-                value = category!!.lookup(value)
+        return lowestLocationNumber
+    }
 
-                if (category.destinationCategory == targetCategory) {
-                    if (value < lowestLocationNumber) {
-                        lowestLocationNumber = value
-                    }
+    private fun getLocationNumberPerSeed(seed: Long): Long {
+        var sourceCategory = "seed"
+        var value = seed
 
-                    break
+        while (true) {
+            val category = almanacCategories[sourceCategory]
+            value = category!!.lookup(value)
+
+            if (category.destinationCategory == "location") {
+                return value
+            }
+
+            sourceCategory = category.destinationCategory
+        }
+    }
+
+    fun getLowestLocationNumberForSeedRange(): Long {
+        var lowestLocationNumber = Long.MAX_VALUE
+
+        println("SEED RANGES")
+        for (seedRange in seedRanges) {
+            println("${seedRange.first}..${seedRange.last}")
+        }
+
+        for (seedRange in seedRanges) {
+            println("Check")
+            for (seed in seedRange) {
+                val locationNumber = getLocationNumberPerSeed(seed)
+                if (locationNumber < lowestLocationNumber) {
+                    lowestLocationNumber = locationNumber
                 }
-
-                sourceCategory = category.destinationCategory
             }
         }
 
