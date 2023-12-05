@@ -1,5 +1,10 @@
+class Day05(
+    val seeds: List<Long>,
+    val seedRanges: List<LongRange>,
+    val almanacCategories: Map<String, AlmanacCategory>
+) {
 
-class Day05(val seeds: List<Long>, val seedRanges: List<LongRange>, val almanacCategories: Map<String, AlmanacCategory>) {
+    val almanacCache = mutableMapOf<String, Long>()
 
     companion object {
 
@@ -48,7 +53,7 @@ class Day05(val seeds: List<Long>, val seedRanges: List<LongRange>, val almanacC
 
         private fun readSeedRanges(serialSeeds: String): List<LongRange> {
             return readSeeds(serialSeeds).chunked(2)
-                .map { it[0] until it[0] + it[1]  }
+                .map { it[0] until it[0] + it[1] }
                 .toList()
         }
 
@@ -71,7 +76,7 @@ class Day05(val seeds: List<Long>, val seedRanges: List<LongRange>, val almanacC
         var lowestLocationNumber = Long.MAX_VALUE
 
         for (seed in seeds) {
-            val locationNumber = getLocationNumberPerSeed(seed)
+            val locationNumber = getLocationNumber(seed, "seed")
             if (locationNumber < lowestLocationNumber) {
                 lowestLocationNumber = locationNumber
             }
@@ -80,20 +85,22 @@ class Day05(val seeds: List<Long>, val seedRanges: List<LongRange>, val almanacC
         return lowestLocationNumber
     }
 
-    private fun getLocationNumberPerSeed(seed: Long): Long {
-        var sourceCategory = "seed"
-        var value = seed
+    private fun getLocationNumber(seed: Long, sourceCategory: String): Long {
 
-        while (true) {
-            val category = almanacCategories[sourceCategory]
-            value = category!!.lookup(value)
+        val cached = almanacCache.get(sourceCategory + seed)
+        if (cached != null) return cached
 
-            if (category.destinationCategory == "location") {
-                return value
-            }
+        val category = almanacCategories[sourceCategory]
+        val value = category!!.lookup(seed)
 
-            sourceCategory = category.destinationCategory
+        if (category.destinationCategory == "location") {
+            return value
         }
+
+        val location = getLocationNumber(value, category.destinationCategory)
+        almanacCache[sourceCategory + seed] = location
+
+        return location
     }
 
     fun getLowestLocationNumberForSeedRange(): Long {
@@ -107,7 +114,7 @@ class Day05(val seeds: List<Long>, val seedRanges: List<LongRange>, val almanacC
         for (seedRange in seedRanges) {
             println("Check")
             for (seed in seedRange) {
-                val locationNumber = getLocationNumberPerSeed(seed)
+                val locationNumber = getLocationNumber(seed, "seed")
                 if (locationNumber < lowestLocationNumber) {
                     lowestLocationNumber = locationNumber
                 }
@@ -118,7 +125,11 @@ class Day05(val seeds: List<Long>, val seedRanges: List<LongRange>, val almanacC
     }
 }
 
-data class AlmanacCategory(val sourceCategory: String, val destinationCategory: String, val mappings: List<AlmanacMapping>) {
+data class AlmanacCategory(
+    val sourceCategory: String,
+    val destinationCategory: String,
+    val mappings: List<AlmanacMapping>
+) {
     fun lookup(sourceNumber: Long): Long {
         for (mapping in mappings) {
             if (mapping.isInRange(sourceNumber))
@@ -131,7 +142,7 @@ data class AlmanacCategory(val sourceCategory: String, val destinationCategory: 
 
 data class AlmanacMapping(val sourceRangeStart: Long, val destinationRangeStart: Long, val rangeLength: Long) {
     fun isInRange(input: Long): Boolean {
-        val range = sourceRangeStart until sourceRangeStart+rangeLength
+        val range = sourceRangeStart until sourceRangeStart + rangeLength
 
         return input in range
     }
