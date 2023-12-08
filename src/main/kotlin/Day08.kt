@@ -7,7 +7,7 @@ class Day08 {
     }
 
     // NNN = (TNT, XDJ)
-    private val desertNodeRegex = "([A-Z]{3}) = \\(([A-Z]{3}), ([A-Z]{3})\\)".toRegex()
+    private val desertNodeRegex = "([A-Z0-9]{3}) = \\(([A-Z0-9]{3}), ([A-Z0-9]{3})\\)".toRegex()
 
     fun countTotalSteps(input: List<String>): Int {
         var stepCount = 0
@@ -41,6 +41,45 @@ class Day08 {
         }
 
         return network.toMap()
+    }
+
+    fun getAllNodesEndingWithA(desertNetwork: Map<String, DesertNode>): List<String> {
+        return desertNetwork.keys
+            .filter { it.endsWith('A') }
+            .toList()
+    }
+
+    fun countTotalStepsV2(input: List<String>): Int {
+        var stepCount = 0
+
+        val directions = input.removeFirst()
+        input.removeFirst()
+
+        val desertNetwork = parseDesertNetwork(input)
+        var currentNodes = getAllNodesEndingWithA(desertNetwork)
+
+        while (true) {
+            for (step in directions) {
+                stepCount++
+                val nextNodes = mutableListOf<String>()
+                var allNodesFoundDestination = true
+
+                for (currentNode in currentNodes) {
+
+                    val nextNode = when (step) {
+                        MOVE_LEFT -> desertNetwork[currentNode]!!.left
+                        MOVE_RIGHT -> desertNetwork[currentNode]!!.right
+                        else -> ""
+                    }
+                    nextNodes.add(nextNode)
+
+                    if (!nextNode.endsWith('Z')) allNodesFoundDestination = false
+                }
+
+                if (allNodesFoundDestination) return stepCount
+                currentNodes = nextNodes
+            }
+        }
     }
 }
 
