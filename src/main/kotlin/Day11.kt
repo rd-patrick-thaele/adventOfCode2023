@@ -7,15 +7,28 @@ class Day11 {
         private const val EMPTY_SPACE_SYMBOL = '.'
     }
 
-    fun sumOfGalaxyDistances(universe: List<String>): Int {
-        var sumOfDistances = 0
-        val galaxies = findGalaxies(expandUniverse(universe)).toMutableList()
+    fun sumOfGalaxyDistances(universe: List<String>, expansionFactor:Int = 2): Long {
+        var sumOfDistances = 0L
+        val galaxies = findGalaxies(universe).toMutableList()
+        val (yIndexes, xIndexes) = getExpansionIndexes(universe)
+        println("Y Indexes: $yIndexes")
+        println("X Indexes: $xIndexes")
 
         while (galaxies.isNotEmpty()) {
             val galaxy = galaxies.removeFirst()!!
 
             for (other in galaxies) {
-                sumOfDistances += galaxy.distance(other)
+                var distance = galaxy.distance(other)
+
+                val rangeY = if (other.y > galaxy.y) galaxy.y..other.y else other.y..galaxy.y
+                val countYExpanses = yIndexes.intersect(rangeY).size
+                distance += (expansionFactor - 1) * countYExpanses
+
+                val rangeX = if(other.x > galaxy.x) galaxy.x..other.x else other.x..galaxy.x
+                val countXExpanses = xIndexes.intersect(rangeX).size
+                distance += (expansionFactor - 1) * countXExpanses
+
+                sumOfDistances += distance
             }
         }
 
@@ -68,6 +81,27 @@ class Day11 {
         }
 
         return galaxies
+    }
+
+    fun getExpansionIndexes(universe: List<String>): Pair<List<Int>, List<Int>> {
+        val yIndexes = mutableListOf<Int>()
+        val xIndexes = (0 until universe.first().length).toMutableList()
+
+        for ((yIndex, line) in universe.withIndex()) {
+
+            val foundGalaxies = mutableSetOf<Int>()
+            for ((xIndex, point) in line.withIndex()) {
+                if (point == GALAXY_SYMBOL)
+                    foundGalaxies.add(xIndex)
+            }
+
+            if (foundGalaxies.isEmpty())
+                yIndexes.add(yIndex)
+
+            xIndexes.removeAll(foundGalaxies)
+        }
+
+        return Pair(yIndexes, xIndexes)
     }
 }
 

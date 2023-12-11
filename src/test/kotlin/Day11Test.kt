@@ -86,13 +86,45 @@ class Day11Test : FreeSpec({
             // then
             sum shouldBe 374
         }
+
+        "getExpansionIndexes" {
+            // when
+            val (yIndexes, xIndexes) = Day11().getExpansionIndexes(universe)
+
+            // then
+            yIndexes shouldContainAll listOf(3,7)
+            xIndexes shouldContainAll listOf(2, 5, 8)
+        }
+
+        "sumOfGalaxyDistances - expansionFactor = 10 " {
+            // given
+            val expansionFactor = 10
+
+            // when
+            val sum = Day11().sumOfGalaxyDistances(universe, expansionFactor)
+
+            // then
+            sum shouldBe 1_030
+        }
+
+        "sumOfGalaxyDistances - expansionFactor = 100 " {
+            // given
+            val expansionFactor = 100
+
+            // when
+            val sum = Day11().sumOfGalaxyDistances(universe, expansionFactor)
+
+            // then
+            sum shouldBe 8_410
+        }
     }
 
     "solution" - {
 
+        //given
+        val universe = getResourceFileAsStringSequence("Day11/input.txt")
+
         "part 1" {
-            //given
-            val universe = getResourceFileAsStringSequence("Day11/input.txt")
 
             // when
             val sum = Day11().sumOfGalaxyDistances(universe)
@@ -102,7 +134,14 @@ class Day11Test : FreeSpec({
         }
 
         "part 2" {
+            // given
+            val expansionFactor = 1_000_000
+
             // when
+            val sum = Day11().sumOfGalaxyDistances(universe, expansionFactor)
+
+            // then
+            sum shouldBe 731_244_261_352L
         }
     }
 })
