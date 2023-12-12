@@ -111,6 +111,35 @@ class Day12Test : FreeSpec({
             // then
             count shouldBe 21
         }
+
+        "unfold" - {
+            withData(
+                listOf(
+                    Pair(".# 1", ".#?.#?.#?.#?.# 1,1,1,1,1"),
+                    Pair("???.### 1,1,3", "???.###????.###????.###????.###????.### 1,1,3,1,1,3,1,1,3,1,1,3,1,1,3"),
+                )
+            ){ (input, output) ->
+                Day12().unfold(input) shouldBe output
+            }
+        }
+
+        "part 2" {
+            // given
+            val records = """
+                ???.### 1,1,3
+                .??..??...?##. 1,1,3
+                ?#?#?#?#?#?#?#? 1,3,1,6
+                ????.#...#... 4,1,1
+                ????.######..#####. 1,6,5
+                ?###???????? 3,2,1
+            """.trimIndent().lineSequence().toList()
+
+            // when
+            val count = Day12().getTotalArrangementsUnfolded(records)
+
+            // then
+            count shouldBe 525_152
+        }
     }
 
     "solution" - {

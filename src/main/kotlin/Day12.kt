@@ -4,12 +4,32 @@ class Day12 {
             .map { it.generateArrangements() }
             .sumOf { it.size }
     }
+
+    fun getTotalArrangementsUnfolded(records: List<String>): Int {
+        return records.map { unfold(it) }
+            .map { HotSpringsRecord.parse(it) }
+            .map { it.generateArrangements() }
+            .sumOf { it.size }
+    }
+
+    fun unfold(record: String): String {
+        val (brokenRecord, groups) = record.split(" ")
+        var unfoldedRecord = brokenRecord
+        var unfoldedGroups = groups
+
+        repeat(4){
+            unfoldedRecord += HotSpringsRecord.SYMBOL_UNKNOWN + brokenRecord
+            unfoldedGroups += ",$groups"
+        }
+
+        return "$unfoldedRecord $unfoldedGroups"
+    }
 }
 
 data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: List<Int>) {
     companion object {
 
-        private const val SYMBOL_UNKNOWN = '?'
+        const val SYMBOL_UNKNOWN = '?'
         private const val SYMBOL_DAMAGED = '#'
         private const val SYMBOL_OPERATIONAL = '.'
         fun parse(record: String): HotSpringsRecord {
