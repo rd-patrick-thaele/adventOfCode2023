@@ -8,8 +8,7 @@ class Day12 {
     fun getTotalArrangementsUnfolded(records: List<String>): Int {
         return records.map { unfold(it) }
             .map { HotSpringsRecord.parse(it) }
-            .map { it.generateArrangements() }
-            .sumOf { it.size }
+            .sumOf { it.getNbOfArrangements() }
     }
 
     fun unfold(record: String): String {
@@ -17,7 +16,7 @@ class Day12 {
         var unfoldedRecord = brokenRecord
         var unfoldedGroups = groups
 
-        repeat(4){
+        repeat(4) {
             unfoldedRecord += HotSpringsRecord.SYMBOL_UNKNOWN + brokenRecord
             unfoldedGroups += ",$groups"
         }
@@ -46,9 +45,13 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
 
         val regex = generateValidationRegex()
 
-        return permuteArrangements(nbOfDamagedUnknowns, unknowns.size)
+        val arrangements = permuteArrangements(nbOfDamagedUnknowns, unknowns.size)
             .map { replaceUnknowns(unknowns, it) }
             .filter { regex.matches(it) }
+
+        println(arrangements.size)
+
+        return arrangements
     }
 
     fun findUnknowns(): List<Int> {
@@ -71,7 +74,7 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
     }
 
     private fun generateValidationRegex(): Regex {
-        val regex =  "\\.*" + damagedGroupSizes.joinToString("\\.+") { "#{$it}" } + "\\.*"
+        val regex = "\\.*" + damagedGroupSizes.joinToString("\\.+") { "#{$it}" } + "\\.*"
 
         return regex.toRegex()
     }
@@ -83,7 +86,7 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
         if (nbOfDamagedUnknowns == nbOfTotalUnknowns)
             return listOf(SYMBOL_DAMAGED.toString().repeat(nbOfDamagedUnknowns))
 
-        val prependOperational =  permuteArrangements(nbOfDamagedUnknowns, nbOfTotalUnknowns - 1)
+        val prependOperational = permuteArrangements(nbOfDamagedUnknowns, nbOfTotalUnknowns - 1)
             .map { SYMBOL_OPERATIONAL + it }
         val prependDamaged = permuteArrangements(nbOfDamagedUnknowns - 1, nbOfTotalUnknowns - 1)
             .map { SYMBOL_DAMAGED + it }
@@ -100,4 +103,173 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
 
         return symbols.joinToString("")
     }
+
+    fun getPotentialGroups(): List<SpringGroup> {
+        val groups = mutableListOf<SpringGroup>()
+        var tempGroupIndex = -1
+        var tempGroup = ""
+
+        for ((index, symbol) in brokenRecord.withIndex()) {
+
+            if (symbol != SYMBOL_OPERATIONAL) {
+                if (tempGroupIndex == -1) {
+                    tempGroupIndex = index
+                }
+
+                tempGroup += symbol
+                continue
+            }
+
+            if (tempGroupIndex != -1) {
+                groups.add(SpringGroup(tempGroupIndex, tempGroup))
+                tempGroupIndex = -1
+                tempGroup = ""
+            }
+        }
+
+        if (tempGroupIndex != -1) {
+            groups.add(SpringGroup(tempGroupIndex, tempGroup))
+        }
+
+        return groups
+    }
+
+    fun getNbOfArrangements(): Int {
+        val potentialGroups = getPotentialGroups()
+
+        val count = countPermutations(potentialGroups, damagedGroupSizes)
+        println(count)
+        return count
+    }
+
+    private fun countPermutations(potentialGroups: List<SpringGroup>, damagedGroupSizes: List<Int>): Int {
+
+        if (!canPermutationBePerformed(potentialGroups, damagedGroupSizes))
+            return 0
+
+        if (potentialGroups.size == 1)
+            return countPermutationsPerGroup(potentialGroups.first(), damagedGroupSizes)
+
+        var count = 0
+        val potentialGroup = potentialGroups.first()
+        val reducedGroups = potentialGroups.subList(1, potentialGroups.size)
+
+        for (index in 0..damagedGroupSizes.size) {
+            val (left, right) = splitDamagedGroupSizes(index, damagedGroupSizes)
+
+            if (!canPermutationBePerformed(reducedGroups, right)) continue
+
+            val groupPermutations = countPermutationsPerGroup(potentialGroup, left)
+            if (groupPermutations == 0) continue
+
+            val rest = countPermutations(reducedGroups, right)
+            count += groupPermutations * rest
+        }
+
+        return count
+    }
+
+    private fun canPermutationBePerformed(potentialGroups: List<SpringGroup>, damagedGroupSizes: List<Int>): Boolean {
+
+        val availableGroupSpace = potentialGroups.sumOf { it.elements.length }
+        val minNeededGroupSpace = damagedGroupSizes.sum()
+
+        if (potentialGroups.isEmpty() || damagedGroupSizes.isEmpty() || availableGroupSpace < minNeededGroupSpace)
+            return false
+
+        return true
+    }
+
+    fun countPermutationsPerGroup(potentialGroup: SpringGroup, damagedGroupSizes: List<Int>): Int {
+        val availableGroupSpace = potentialGroup.elements.length
+        val minNeededGroupSpace = damagedGroupSizes.sum() + damagedGroupSizes.size - 1
+        if (availableGroupSpace < minNeededGroupSpace || damagedGroupSizes.isEmpty())
+            return 0
+
+        var count = 0
+
+        val operationals = damagedGroupSizes.map { 1 }.toMutableList()
+        operationals[0] = 0
+
+        var indexToUpdate = operationals.lastIndex
+        while (true) {
+            if (runPermutation(operationals, potentialGroup, damagedGroupSizes))
+                count++
+
+            // update operationals
+            operationals[indexToUpdate]++
+
+            while (operationals.sum() + damagedGroupSizes.sum() > availableGroupSpace) {
+                if (indexToUpdate == 0)
+                    return count
+
+                operationals[indexToUpdate] = 1
+                indexToUpdate--
+                operationals[indexToUpdate]++
+            }
+
+            indexToUpdate = operationals.lastIndex
+        }
+    }
+
+    private fun runPermutation(
+        operationals: MutableList<Int>, potentialGroup: SpringGroup, damagedGroupSizes: List<Int>
+    ): Boolean {
+
+        var groupSizeIndex = -1
+        var remainingGroupSizeValue = -1
+        var operationalsIndex = 0
+        var operationalsValue = operationals[operationalsIndex]
+
+        for (symbol in potentialGroup.elements) {
+
+            if (remainingGroupSizeValue == -1) {
+                if (groupSizeIndex < damagedGroupSizes.lastIndex && operationalsValue <= 0) {
+                    groupSizeIndex++
+                    remainingGroupSizeValue = damagedGroupSizes[groupSizeIndex]
+                } else {
+                    if (symbol == SYMBOL_DAMAGED)
+                        return false
+
+                    operationalsValue--
+                    //print(".")
+                }
+            }
+
+            if (remainingGroupSizeValue == 0) {
+                if (symbol == SYMBOL_DAMAGED)
+                    return false
+
+                remainingGroupSizeValue--
+
+                if (operationalsIndex < operationals.lastIndex)
+                    operationalsIndex++
+
+                operationalsValue = operationals[operationalsIndex] - 1
+                //print(".")
+            }
+
+            if (remainingGroupSizeValue > 0) {
+                //print("#")
+                remainingGroupSizeValue--
+            }
+        }
+        //println()
+
+        return true
+    }
+
+    fun splitDamagedGroupSizes(index: Int, damagedGroupSizes: List<Int>): Pair<List<Int>, List<Int>> {
+        val left = mutableListOf<Int>()
+        val right = mutableListOf<Int>()
+
+        for ((i, value) in damagedGroupSizes.withIndex()) {
+            if (index > i) left.add(value)
+            else right.add(value)
+        }
+
+        return Pair(left, right)
+    }
 }
+
+data class SpringGroup(val index: Int, val elements: String)
