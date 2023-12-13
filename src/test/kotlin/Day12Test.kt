@@ -1,7 +1,5 @@
-import io.kotest.core.annotation.Ignored
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.datatest.withData
-import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainInOrder
 import io.kotest.matchers.shouldBe
@@ -153,7 +151,7 @@ class Day12Test : FreeSpec({
 
             // then
             groups.size shouldBe 2
-            groups shouldContainInOrder listOf(SpringGroup(0, "???"), SpringGroup(4, "###"))
+            groups shouldContainInOrder listOf(SpringGroup("???", false), SpringGroup("###", true))
         }
 
         "getNbOfArrangements" - {
@@ -169,6 +167,8 @@ class Day12Test : FreeSpec({
                     Pair("??.####?.??#?#?.?.?? 4,6", 1),
                     Pair("?.???.????????? 1,1,1,2,1", 121),
                     Pair("??#?.#??.?? 2,1,1", 6),
+                    Pair("#?.?#?????????##???? 1,13", 2),
+                    Pair(".???.??#.?.# 1,3,1", 3),
                 )
             ) { (rawRecord, nbOfArrangements) ->
                 val record = HotSpringsRecord.parse(rawRecord)
@@ -182,11 +182,11 @@ class Day12Test : FreeSpec({
             withData(
                 listOf(
                     Pair("???.### 1,1,3", 1),
-                    //Pair(".??..??...?##. 1,1,3", 16_384),
+                    Pair(".??..??...?##. 1,1,3", 16_384),
                     Pair("?#?#?#?#?#?#?#? 1,3,1,6", 1),
                     Pair("????.#...#... 4,1,1", 16),
                     Pair("????.######..#####. 1,6,5", 2500),
-                    //Pair("?###???????? 3,2,1", 506_250),
+                    Pair("?###???????? 3,2,1", 506_250),
                 )
             ) { (rawRecord, nbOfArrangements) ->
                 val record = HotSpringsRecord.parse(Day12().unfold(rawRecord))

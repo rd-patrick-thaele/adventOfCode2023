@@ -1,8 +1,7 @@
 class Day12 {
     fun getTotalArrangements(records: List<String>): Int {
         return records.map { HotSpringsRecord.parse(it) }
-            .map { it.generateArrangements() }
-            .sumOf { it.size }
+            .sumOf { it.getNbOfArrangements() }
     }
 
     fun getTotalArrangementsUnfolded(records: List<String>): Int {
@@ -106,29 +105,31 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
 
     fun getPotentialGroups(): List<SpringGroup> {
         val groups = mutableListOf<SpringGroup>()
-        var tempGroupIndex = -1
+        var isMandatory = false
         var tempGroup = ""
 
-        for ((index, symbol) in brokenRecord.withIndex()) {
+        for (symbol in brokenRecord) {
 
-            if (symbol != SYMBOL_OPERATIONAL) {
-                if (tempGroupIndex == -1) {
-                    tempGroupIndex = index
-                }
+            if (symbol == SYMBOL_OPERATIONAL && tempGroup.isNotEmpty()) {
+                groups.add(SpringGroup(tempGroup, isMandatory))
+                tempGroup = ""
+                isMandatory = false
+                continue
+            }
 
+            if (symbol == SYMBOL_DAMAGED) {
+                isMandatory = true
                 tempGroup += symbol
                 continue
             }
 
-            if (tempGroupIndex != -1) {
-                groups.add(SpringGroup(tempGroupIndex, tempGroup))
-                tempGroupIndex = -1
-                tempGroup = ""
+            if (symbol == SYMBOL_UNKNOWN) {
+                tempGroup += symbol
             }
         }
 
-        if (tempGroupIndex != -1) {
-            groups.add(SpringGroup(tempGroupIndex, tempGroup))
+        if (tempGroup.isNotEmpty()) {
+            groups.add(SpringGroup(tempGroup, isMandatory))
         }
 
         return groups
@@ -157,16 +158,30 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
         for (index in 0..damagedGroupSizes.size) {
             val (left, right) = splitDamagedGroupSizes(index, damagedGroupSizes)
 
+            if (left.isEmpty() && !potentialGroup.mandatory) {
+                count += countPermutations(reducedGroups, right)
+                continue
+            }
+
+            if (right.isEmpty() && !containsMandatoryGroups(reducedGroups)) {
+                count += countPermutationsPerGroup(potentialGroup, left)
+                continue
+            }
+
             if (!canPermutationBePerformed(reducedGroups, right)) continue
 
             val groupPermutations = countPermutationsPerGroup(potentialGroup, left)
-            if (groupPermutations == 0) continue
+            if (groupPermutations == 0 && potentialGroup.mandatory) continue
 
             val rest = countPermutations(reducedGroups, right)
             count += groupPermutations * rest
         }
 
         return count
+    }
+
+    private fun containsMandatoryGroups(groups: List<SpringGroup>): Boolean {
+        return groups.any { it.mandatory }
     }
 
     private fun canPermutationBePerformed(potentialGroups: List<SpringGroup>, damagedGroupSizes: List<Int>): Boolean {
@@ -272,4 +287,4 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
     }
 }
 
-data class SpringGroup(val index: Int, val elements: String)
+data class SpringGroup(val elements: String, val mandatory: Boolean)
