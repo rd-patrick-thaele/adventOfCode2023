@@ -124,7 +124,7 @@ class Day12Test : FreeSpec({
         }
 
 
-        "!part 2" {
+        "part 2" {
             // given
             val records = """
                 ???.### 1,1,3
@@ -177,7 +177,7 @@ class Day12Test : FreeSpec({
 
         }
 
-        "getNbOfArrangements - unfolded" - {
+        "!getNbOfArrangements - unfolded" - {
 
             withData(
                 listOf(
@@ -218,7 +218,26 @@ class Day12Test : FreeSpec({
 
         }
 
+        "V2" - {
+            "getNbOfArrangements - unfolded" - {
 
+                withData(
+                    listOf(
+                        Pair("???.### 1,1,3", 1),
+                        Pair(".??..??...?##. 1,1,3", 16_384),
+                        Pair("?#?#?#?#?#?#?#? 1,3,1,6", 1),
+                        Pair("????.#...#... 4,1,1", 16),
+                        Pair("????.######..#####. 1,6,5", 2500),
+                        Pair("?###???????? 3,2,1", 506_250),
+                        Pair("????.??#.?????#? 1,1,1,1,6", 314584L),
+                    )
+                ) { (rawRecord, nbOfArrangements) ->
+                    val record = HotSpringsRecord.parse(Day12().unfold(rawRecord))
+                    record.v2() shouldBe nbOfArrangements
+                }
+
+            }
+        }
     }
 
     "solution" - {
@@ -240,7 +259,7 @@ class Day12Test : FreeSpec({
             val count = Day12().getTotalArrangementsUnfolded(records)
 
             // then
-            count shouldBe 6_981
+            count shouldBe 4_546_215_031_609L
         }
     }
 })

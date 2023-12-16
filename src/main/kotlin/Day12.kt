@@ -1,13 +1,13 @@
 class Day12 {
-    fun getTotalArrangements(records: List<String>): Int {
+    fun getTotalArrangements(records: List<String>): Long {
         return records.map { HotSpringsRecord.parse(it) }
             .sumOf { it.getNbOfArrangements() }
     }
 
-    fun getTotalArrangementsUnfolded(records: List<String>): Int {
+    fun getTotalArrangementsUnfolded(records: List<String>): Long {
         return records.map { unfold(it) }
             .map { HotSpringsRecord.parse(it) }
-            .sumOf { it.getNbOfArrangements() }
+            .sumOf { it.v2() }
     }
 
     fun unfold(record: String): String {
@@ -25,6 +25,9 @@ class Day12 {
 }
 
 data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: List<Int>) {
+
+    val cache = mutableMapOf<Pair<String, List<Int>>, Long>()
+
     companion object {
 
         const val SYMBOL_UNKNOWN = '?'
@@ -135,15 +138,23 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
         return groups
     }
 
-    fun getNbOfArrangements(): Int {
+    fun getNbOfArrangements(): Long {
         val potentialGroups = getPotentialGroups()
+        val (optimalGroups, optimalGroupSizes) = optimize(potentialGroups, damagedGroupSizes)
 
-        val count = countPermutations(potentialGroups, damagedGroupSizes)
+        val count = countPermutations(optimalGroups, optimalGroupSizes)
         println(count)
         return count
     }
 
-    private fun countPermutations(potentialGroups: List<SpringGroup>, damagedGroupSizes: List<Int>): Int {
+    private fun optimize(
+        potentialGroups: List<SpringGroup>, damagedGroupSizes: List<Int>
+    ): Pair<List<SpringGroup>, List<Int>> {
+
+        return Pair(potentialGroups, damagedGroupSizes)
+    }
+
+    private fun countPermutations(potentialGroups: List<SpringGroup>, damagedGroupSizes: List<Int>): Long {
 
         if (!canPermutationBePerformed(potentialGroups, damagedGroupSizes))
             return 0
@@ -151,7 +162,7 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
         if (potentialGroups.size == 1)
             return countPermutationsPerGroup(potentialGroups.first(), damagedGroupSizes)
 
-        var count = 0
+        var count = 0L
         val potentialGroup = potentialGroups.first()
         val reducedGroups = potentialGroups.subList(1, potentialGroups.size)
 
@@ -171,7 +182,7 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
             if (!canPermutationBePerformed(reducedGroups, right)) continue
 
             val groupPermutations = countPermutationsPerGroup(potentialGroup, left)
-            if (groupPermutations == 0 && potentialGroup.mandatory) continue
+            if (groupPermutations == 0L && potentialGroup.mandatory) continue
 
             val rest = countPermutations(reducedGroups, right)
             count += groupPermutations * rest
@@ -195,13 +206,13 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
         return true
     }
 
-    fun countPermutationsPerGroup(potentialGroup: SpringGroup, damagedGroupSizes: List<Int>): Int {
+    fun countPermutationsPerGroup(potentialGroup: SpringGroup, damagedGroupSizes: List<Int>): Long {
         val availableGroupSpace = potentialGroup.elements.length
         val minNeededGroupSpace = damagedGroupSizes.sum() + damagedGroupSizes.size - 1
         if (availableGroupSpace < minNeededGroupSpace || damagedGroupSizes.isEmpty())
             return 0
 
-        var count = 0
+        var count = 0L
 
         val operationals = damagedGroupSizes.map { 1 }.toMutableList()
         operationals[0] = 0
@@ -284,6 +295,55 @@ data class HotSpringsRecord(val brokenRecord: String, val damagedGroupSizes: Lis
         }
 
         return Pair(left, right)
+    }
+
+    fun v2(): Long {
+        return count(brokenRecord, damagedGroupSizes)
+    }
+
+    private fun count(brokenRecord: String, damagedGroupSizes: List<Int>): Long {
+
+        if (brokenRecord.isEmpty()) {
+            return if (damagedGroupSizes.isEmpty()) 1
+            else 0
+        }
+
+        if (damagedGroupSizes.isEmpty()) {
+            return if (brokenRecord.contains(SYMBOL_DAMAGED)) 0
+            else 1
+        }
+
+        val key = Pair(brokenRecord, damagedGroupSizes)
+        val cachedResult = cache[key]
+        if (cachedResult != null) return cachedResult
+
+        var count = 0L
+
+        if (brokenRecord.first() in listOf(SYMBOL_OPERATIONAL, SYMBOL_UNKNOWN)) {
+            count += count(brokenRecord.substring(1), damagedGroupSizes)
+        }
+
+        if (brokenRecord.first() in listOf(SYMBOL_DAMAGED, SYMBOL_UNKNOWN)) {
+            val fieldAfterNotDamaged = if (damagedGroupSizes.first() >= brokenRecord.length) true
+            else brokenRecord[damagedGroupSizes.first()] != SYMBOL_DAMAGED
+
+            if (damagedGroupSizes.first() <= brokenRecord.length
+                && !brokenRecord.substring(0, damagedGroupSizes.first()).contains(SYMBOL_OPERATIONAL)
+                && (damagedGroupSizes.first() == brokenRecord.length || fieldAfterNotDamaged)
+            ) {
+                val brokenRecordReducedByFirstGroup = if (damagedGroupSizes.first() + 1 > brokenRecord.length) ""
+                else brokenRecord.substring(damagedGroupSizes.first() + 1)
+
+                val remainingGroups = if (damagedGroupSizes.size > 1) {
+                    damagedGroupSizes.subList(1, damagedGroupSizes.size)
+                } else emptyList()
+
+                count += count(brokenRecordReducedByFirstGroup, remainingGroups)
+            }
+        }
+
+        cache[key] = count
+        return count
     }
 }
 
