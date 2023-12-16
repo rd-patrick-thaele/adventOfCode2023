@@ -181,6 +181,14 @@ class Day16Test : FreeSpec({
             // then
             countEnergizedFields shouldBe 46
         }
+
+        "part 2"{
+            // when
+            val maxEnergizedFields = Day16(layout).getMaxEnergizedFields()
+
+            // then
+            maxEnergizedFields shouldBe 51
+        }
     }
 
     "solution" - {
@@ -198,6 +206,10 @@ class Day16Test : FreeSpec({
 
         "part 2" {
             // when
+            val maxEnergizedFields = Day16(layout).getMaxEnergizedFields()
+
+            // then
+            maxEnergizedFields shouldBe 7_793
         }
     }
 })

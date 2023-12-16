@@ -9,9 +9,37 @@ class Day16(val layout: List<String>) {
         const val SYMBOL_HORIZONTAL_SPLITTER = '-'
     }
 
-    fun countEnergizedFields(): Int {
+    fun getMaxEnergizedFields(): Int {
+        var maxEnergizedFields = 0
+        val xLastIndex = layout.first().lastIndex
 
-        sendBeam(Beam(BeamPosition(0,0), BeamDirection.RIGHT))
+        for (y in layout.indices) {
+            val countLeftBorder = countEnergizedFields(Beam(BeamPosition(y, 0), BeamDirection.RIGHT))
+            if (countLeftBorder > maxEnergizedFields)
+                maxEnergizedFields = countLeftBorder
+
+            val countRightBorder = countEnergizedFields(Beam(BeamPosition(y, xLastIndex), BeamDirection.LEFT))
+            if (countRightBorder > maxEnergizedFields)
+                maxEnergizedFields = countRightBorder
+        }
+
+        for (x in 0..xLastIndex) {
+            val countUpperBorder = countEnergizedFields(Beam(BeamPosition(0, x), BeamDirection.DOWNWARD))
+            if (countUpperBorder > maxEnergizedFields)
+                maxEnergizedFields = countUpperBorder
+
+            val countLowerBorder = countEnergizedFields(Beam(BeamPosition(layout.lastIndex, x), BeamDirection.UPWARD))
+            if (countLowerBorder > maxEnergizedFields)
+                maxEnergizedFields = countLowerBorder
+        }
+
+        return maxEnergizedFields
+    }
+
+    fun countEnergizedFields(startBeam: Beam = Beam(BeamPosition(0,0), BeamDirection.RIGHT)): Int {
+        energizedFields.clear()
+
+        sendBeam(startBeam)
 
         return energizedFields.count()
     }
