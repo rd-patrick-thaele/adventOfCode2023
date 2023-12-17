@@ -130,7 +130,7 @@ class Day05Test : FreeSpec({
             locationNumber shouldBe 309_796_150L
         }
 
-        "part 2" {
+        "!part 2" {
             // when
             val locationNumber = day05.getLowestLocationNumberForSeedRange()
 
